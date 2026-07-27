@@ -16,13 +16,13 @@ up:
 	@make dc cmd="up -d"
 
 logs:
-	@make dc cmd="logs -f connector"
+	@make dc cmd="logs -f garmin-connector"
 
 login:
-	@make dc cmd="run --rm connector login"
+	@make dc cmd="run --rm garmin-connector login"
 
 status:
-	@make dc cmd="exec connector dreeve-garmin-connector status"
+	@make dc cmd="exec garmin-connector dreeve-garmin-connector status"
 
 down:
 	@make dc cmd="down --remove-orphans"

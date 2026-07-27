@@ -206,7 +206,7 @@ def ask_for_mfa_code() -> str:
     if not sys.stdin.isatty():
         raise MfaPromptUnavailable(
             "Garmin asked for a multi-factor code, but there is no terminal to ask on. "
-            "Run this with `docker compose run --rm connector login`, which attaches one."
+            "Run this with `docker compose run --rm garmin-connector login`, which attaches one."
         )
 
     return input("Garmin sent a multi-factor code. Enter it: ").strip()

@@ -22,7 +22,7 @@ from dreeve_garmin_connector.config import Config, InvalidConfiguration
 from dreeve_garmin_connector.garmin import AuthenticationFailed, GarminApi, translated_errors
 from dreeve_garmin_connector.logging_ import Secrets
 
-LOGIN_COMMAND = "docker compose run --rm connector login"
+LOGIN_COMMAND = "docker compose run --rm garmin-connector login"
 NO_SESSION_INSTRUCTION = (
     f"No valid Garmin session. Run `{LOGIN_COMMAND}` once to create one, then start the container again. "
     f"This connector will not log in on its own: repeated logins are what get a Garmin account rate-limited."

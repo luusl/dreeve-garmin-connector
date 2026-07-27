@@ -64,7 +64,7 @@ def test_it_asks_for_a_human_when_there_is_no_session_and_never_touches_garmin(
     with caplog.at_level(logging.INFO), pytest.raises(AuthenticationRequired) as raised:
         Authenticator(config_for(tmp_path), Secrets(), factory).resume()
 
-    assert "docker compose run --rm connector login" in str(raised.value)
+    assert "docker compose run --rm garmin-connector login" in str(raised.value)
     assert "rate-limited" in str(raised.value)
     # Nothing was constructed, so no request was made and no failed login was counted against us.
     assert factory.sessions == []
@@ -228,7 +228,7 @@ def test_it_says_where_to_type_the_code_when_there_is_no_terminal(monkeypatch: p
     with pytest.raises(MfaPromptUnavailable) as raised:
         ask_for_mfa_code()
 
-    assert "docker compose run --rm connector login" in str(raised.value)
+    assert "docker compose run --rm garmin-connector login" in str(raised.value)
 
 
 def test_it_asks_for_the_code_when_there_is_a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
