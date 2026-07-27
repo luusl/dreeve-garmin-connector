@@ -1,0 +1,25 @@
+.idea
+.vscode
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+dist/
+*.egg-info/
+
+# Tooling caches and reports
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+/var/
+
+# Runtime data and secrets
+.env
+.env.local
+/watch/
+/state/
+/tokens/

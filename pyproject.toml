@@ -1,0 +1,79 @@
+[project]
+name = "dreeve-garmin-connector"
+description = "Syncs Garmin Connect activities into Dreeve's watch folder"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [{ name = "Robin Ingelbrecht", email = "ingebrechtrobin@gmail.com" }]
+dynamic = ["version"]
+dependencies = [
+    "garminconnect>=0.3.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/dreeveapp/dreeve-garmin-connector"
+Issues = "https://github.com/dreeveapp/dreeve-garmin-connector/issues"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.14",
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "ruff>=0.9",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/dreeve_garmin_connector/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dreeve_garmin_connector"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "DTZ",  # flake8-datetimez: every datetime in this project is timezone aware
+    "PTH",  # flake8-use-pathlib
+    "SIM",  # flake8-simplify
+    "TID",  # flake8-tidy-imports
+    "ARG",  # flake8-unused-arguments
+    "RUF",  # ruff specific rules
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["dreeve_garmin_connector"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+files = ["src", "tests"]
+
+[[tool.mypy.overrides]]
+# The unofficial Garmin library ships no type information.
+module = ["garminconnect.*", "garth.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers --strict-config"
+
+[tool.coverage.run]
+source = ["src"]
+branch = true

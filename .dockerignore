@@ -1,0 +1,17 @@
+.git
+.github
+.venv
+**/__pycache__
+.mypy_cache
+.pytest_cache
+.ruff_cache
+htmlcov
+.coverage
+coverage.xml
+dist
+*.egg-info
+watch
+state
+tokens
+.env
+.env.local
