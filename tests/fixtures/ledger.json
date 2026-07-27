@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "resolvedSince": "2026-01-01T00:00:00+00:00",
+  "lastSuccessfulSync": "2026-07-25T10:12:00+00:00",
+  "activities": {
+    "12345678901": {
+      "startTimeGmt": "2026-07-25T06:13:42+00:00",
+      "activityType": "cycling",
+      "files": ["12345678901.fit"],
+      "status": "delivered",
+      "attempts": 1,
+      "firstSeen": "2026-07-25T10:12:03+00:00",
+      "lastAttempt": "2026-07-25T10:12:05+00:00",
+      "error": null
+    },
+    "12345678902": {
+      "startTimeGmt": "2026-07-25T08:00:00+00:00",
+      "activityType": "running",
+      "files": [],
+      "status": "failed",
+      "attempts": 3,
+      "firstSeen": "2026-07-25T10:12:03+00:00",
+      "lastAttempt": "2026-07-25T10:12:07+00:00",
+      "error": "connection reset"
+    }
+  }
+}
