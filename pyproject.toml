@@ -11,6 +11,9 @@ dependencies = [
     "garminconnect>=0.3.0",
 ]
 
+[project.scripts]
+dreeve-garmin-connector = "dreeve_garmin_connector.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/dreeveapp/dreeve-garmin-connector"
 Issues = "https://github.com/dreeveapp/dreeve-garmin-connector/issues"

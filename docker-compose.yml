@@ -1,4 +1,28 @@
 services:
+  # The connector itself. Log in once with:
+  #   docker compose run --rm connector login
+  #
+  # Note: env_file is read when the container is *created*, not when it starts, so changed
+  # variables need `docker compose up -d --force-recreate`, not `restart`.
+  connector:
+    build:
+      context: .
+      target: runtime
+    image: robiningelbrecht/dreeve-garmin-connector
+    container_name: dreeve-garmin-connector
+    restart: unless-stopped
+    env_file:
+      - path: ./.env
+        required: false
+    volumes:
+      # Dreeve's watch folder. Point this at the real one, read-write: Dreeve deletes what it imports.
+      - ./watch:/watch
+      - ./state:/state
+      - ./tokens:/tokens
+    ports:
+      - '8080:8080'
+
+  # Toolchain container: everything runs through `make dcr cmd="..."`. Not part of `up`.
   python-cli:
     build:
       context: .
@@ -7,3 +31,4 @@ services:
     working_dir: /app
     volumes:
       - .:/app
+    profiles: [tools]

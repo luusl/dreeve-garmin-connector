@@ -10,7 +10,19 @@ dcr:
 	@make dc cmd="run --rm python-cli $(cmd)"
 
 build-containers:
-	@make dc cmd="build"
+	@make dc cmd="--profile tools build"
+
+up:
+	@make dc cmd="up -d"
+
+logs:
+	@make dc cmd="logs -f connector"
+
+login:
+	@make dc cmd="run --rm connector login"
+
+status:
+	@make dc cmd="exec connector dreeve-garmin-connector status"
 
 down:
 	@make dc cmd="down --remove-orphans"

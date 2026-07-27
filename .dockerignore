@@ -15,3 +15,7 @@ state
 tokens
 .env
 .env.local
+.env.example
+docker-compose.yml
+Makefile
+tests
