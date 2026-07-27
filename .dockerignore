@@ -19,3 +19,5 @@ tokens
 docker-compose.yml
 Makefile
 tests
+docs
+assets

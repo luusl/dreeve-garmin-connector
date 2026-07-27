@@ -1,14 +1,28 @@
-# dreeve-garmin-connector
+<p align="center">
+  <img src="assets/logo.svg" width="250" alt="Logo" >
+</p>
 
-Syncs your Garmin Connect activities into [Dreeve](https://github.com/robiningelbrecht/strava-statistics)'s
-watch folder: it periodically lists new activities, downloads the original FIT files and delivers them
-atomically.
+<h1 align="center">Dreeve Garmin Connector</h1>
 
-```bash
-make build-containers   # build the toolchain image
-make test               # pytest
-make lint               # ruff check + ruff format --check
-make typecheck          # mypy --strict
-make fix                # ruff autofix + format
-make lock               # regenerate uv.lock after changing dependencies
-```
+<p align="center">
+<a href="https://raw.githubusercontent.com/dreeveapp/dreeve-garmin-connector/refs/heads/master/LICENSE"><img src="https://img.shields.io/github/license/dreeveapp/dreeve-garmin-connector?color=428f7e&logo=open%20source%20initiative&logoColor=white" alt="License"></a>
+<a href="https://github.com/dreeveapp/dreeve-garmin-connector/pkgs/container/dreeve-garmin-connector"><img src="https://img.shields.io/github/v/tag/dreeveapp/dreeve-garmin-connector?sort=semver&logo=docker&logoColor=white&label=image" alt="Image version"></a>
+<a href="https://docs.dreeve.app"><img src="https://img.shields.io/badge/docs-docs.dreeve.app-428f7e?logo=readthedocs&logoColor=white" alt="Documentation"></a>
+<a href="https://discord.gg/p4zpZyCHNc"><img src="https://img.shields.io/badge/Dreeve-%235865F4?logo=discord&logoColor=%23ffffff&label=%20&labelColor=585858" alt="Discord server"></a>
+</p>
+
+---
+
+<h4 align="center">Pulls your activities out of Garmin Connect and drops them into <a href="https://dreeve.app">Dreeve</a>'s watch folder.</h4>
+
+<p align="center">
+  <a href="https://docs.dreeve.app">Docs</a> •
+  <a href="https://github.com/dreeveapp/dreeve">Dreeve</a> •
+  <a href="https://discord.gg/p4zpZyCHNc">Discord</a>
+</p>
+
+## 📖 Documentation
+
+Head over to the [documentation](https://docs.dreeve.app) to get started with the installation and
+configuration of this connector.
+
