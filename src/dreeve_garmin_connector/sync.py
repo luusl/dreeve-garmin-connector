@@ -13,6 +13,7 @@ single most reliable way to get rate-limited.
 import logging
 import time
 from collections import Counter
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Protocol
@@ -72,12 +73,19 @@ class Sync:
         client: GarminClient,
         watch_folder: WatchFolder,
         clock: Clock,
+        should_stop: Callable[[], bool] = lambda: False,
     ) -> None:
         self._config = config
         self._ledger = ledger
         self._client = client
         self._watch_folder = watch_folder
         self._clock = clock
+        self._should_stop = should_stop
+
+    @property
+    def ledger(self) -> Ledger:
+        """Read-only, for reporting. Everything that changes the ledger goes through this class."""
+        return self._ledger
 
     def run_once(self) -> CycleResult:
         """Raises `RateLimited` and `AuthenticationFailed`; every other failure is absorbed per activity."""
@@ -191,6 +199,10 @@ class Sync:
 
     def _download_batch(self, batch: list[LedgerEntry], started_at: datetime, counted: Counter[ActivityStatus]) -> None:
         for index, entry in enumerate(batch):
+            if self._should_stop():
+                # Shutdown was asked for. The file in flight is finished, the rest stay pending.
+                logger.info("Stopping after %d of %d activities; the rest stay recorded as waiting", index, len(batch))
+                return
             if index:
                 self._pause()
             counted[self._handle(entry, started_at)] += 1

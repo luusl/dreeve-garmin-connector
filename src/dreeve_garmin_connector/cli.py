@@ -1,11 +1,17 @@
 """Command line entry points."""
 
 import argparse
+import json
 import logging
 import os
+import signal
 import sys
-from collections.abc import Sequence
+import urllib.error
+import urllib.request
+from collections.abc import Callable, Sequence
 from dataclasses import replace
+from datetime import UTC, datetime, timedelta
+from functools import partial
 
 from dreeve_garmin_connector.auth import Authenticator
 from dreeve_garmin_connector.config import Config, InvalidConfiguration
@@ -13,6 +19,8 @@ from dreeve_garmin_connector.delivery import WatchFolder, WatchFolderUnusable
 from dreeve_garmin_connector.garmin import GarminConnectClient, GarminError
 from dreeve_garmin_connector.ledger import LEDGER_FILENAME, CorruptLedger, Ledger
 from dreeve_garmin_connector.logging_ import Secrets, configure_logging
+from dreeve_garmin_connector.loop import SyncLoop, heartbeat_path
+from dreeve_garmin_connector.status import UNHEALTHY_AFTER_CYCLES, Status, StatusServer
 from dreeve_garmin_connector.sync import Sync, SystemClock
 
 EXIT_OK = 0
@@ -38,6 +46,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
         help="List what would be downloaded, download nothing and leave the ledger untouched.",
     )
+    commands.add_parser("run", help="Run cycles on POLL_INTERVAL until stopped. This is what the container does.")
+    commands.add_parser("healthcheck", help="Exit 0 while the connector is healthy. Used by Docker's HEALTHCHECK.")
+    commands.add_parser("status", help="Print what the running connector is doing.")
 
     arguments = parser.parse_args(argv)
 
@@ -55,7 +66,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     configure_logging(config.log_level, config.log_format, secrets)
 
     # argparse has already rejected anything that is not a registered command.
-    commands_by_name = {"login": login, "sync-once": sync_once}
+    commands_by_name = {
+        "login": login,
+        "sync-once": sync_once,
+        "run": run,
+        "healthcheck": healthcheck,
+        "status": status,
+    }
 
     return commands_by_name[arguments.command](config, secrets)
 
@@ -88,7 +105,88 @@ def sync_once(config: Config, secrets: Secrets) -> int:
     return EXIT_OK
 
 
-def build_sync(config: Config, secrets: Secrets) -> Sync:
+def run(config: Config, secrets: Secrets) -> int:
+    clock = SystemClock()
+
+    try:
+        # Fail fast on the two things no amount of waiting will fix. A missing Garmin session is
+        # deliberately not one of them: the container stays up, reports unhealthy and says what to run.
+        WatchFolder(config.watch_dir, config.on_conflict).prepare()
+        Ledger.load(config.state_dir / LEDGER_FILENAME)
+    except (WatchFolderUnusable, CorruptLedger) as exception:
+        logger.error("Cannot start. %s", exception)
+        return EXIT_FAILED
+
+    status = Status(config.poll_interval, clock.now())
+    server = StatusServer(config.http_addr, status, clock) if config.http_addr else None
+    if server is not None:
+        server.start()
+
+    loop = SyncLoop(config, partial(build_sync, config, secrets), status, clock)
+    for received in (signal.SIGTERM, signal.SIGINT):
+        signal.signal(received, loop.request_stop)
+
+    logger.info("Watching Garmin every %d seconds; delivering into %s", config.poll_interval, config.watch_dir)
+    try:
+        loop.run()
+    finally:
+        if server is not None:
+            server.stop()
+
+    return EXIT_OK
+
+
+def healthcheck(config: Config, secrets: Secrets) -> int:  # noqa: ARG001 - every command takes the same arguments
+    if config.http_addr is None:
+        return _heartbeat_is_recent(config)
+
+    try:
+        # urlopen raises for anything that is not a 2xx, so reaching this line means healthy.
+        with urllib.request.urlopen(_local_url(config.http_addr, "/healthz"), timeout=5):
+            return EXIT_OK
+    except (urllib.error.URLError, OSError) as exception:
+        print(f"Not healthy: {exception}", file=sys.stderr)
+        return EXIT_FAILED
+
+
+def status(config: Config, secrets: Secrets) -> int:  # noqa: ARG001 - every command takes the same arguments
+    if config.http_addr is None:
+        print("HTTP_ADDR is off, so there is no status endpoint to ask.", file=sys.stderr)
+        return EXIT_FAILED
+
+    try:
+        with urllib.request.urlopen(_local_url(config.http_addr, "/status"), timeout=5) as response:
+            print(json.dumps(json.loads(response.read()), indent=2))
+    except (urllib.error.URLError, OSError) as exception:
+        print(f"Could not reach the status endpoint: {exception}", file=sys.stderr)
+        return EXIT_FAILED
+
+    return EXIT_OK
+
+
+def _local_url(http_addr: str, path: str) -> str:
+    host, _, port = http_addr.rpartition(":")
+    # 0.0.0.0 is an address to listen on, not one to connect to.
+    return f"http://{'127.0.0.1' if host in ('0.0.0.0', '::', '') else host}:{port}{path}"
+
+
+def _heartbeat_is_recent(config: Config) -> int:
+    heartbeat = heartbeat_path(config.state_dir)
+    try:
+        touched_at = datetime.fromtimestamp(heartbeat.stat().st_mtime, UTC)
+    except OSError:
+        print(f"No heartbeat at {heartbeat} yet.", file=sys.stderr)
+        return EXIT_FAILED
+
+    stale_after = timedelta(seconds=config.poll_interval * UNHEALTHY_AFTER_CYCLES)
+    if datetime.now(UTC) - touched_at > stale_after:
+        print(f"The last successful cycle was at {touched_at.isoformat()}.", file=sys.stderr)
+        return EXIT_FAILED
+
+    return EXIT_OK
+
+
+def build_sync(config: Config, secrets: Secrets, should_stop: Callable[[], bool] = lambda: False) -> Sync:
     watch_folder = WatchFolder(config.watch_dir, config.on_conflict)
     watch_folder.prepare()
 
@@ -100,6 +198,7 @@ def build_sync(config: Config, secrets: Secrets) -> Sync:
         client=GarminConnectClient(session),
         watch_folder=watch_folder,
         clock=SystemClock(),
+        should_stop=should_stop,
     )
 
 

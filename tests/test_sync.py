@@ -36,8 +36,10 @@ SWIM = Activity("333", datetime(2026, 7, 25, 7, 0, tzinfo=UTC), "lap_swimming", 
 @dataclass
 class Harness:
     sync: Sync
+    sync_config: Config
     ledger: Ledger
     watch_dir: Path
+    watch_folder: WatchFolder
     state_dir: Path
     client: FakeGarminClient
     clock: FakeClock
@@ -61,8 +63,10 @@ def harness_for(tmp_path: Path, client: FakeGarminClient, **env: str) -> Harness
 
     return Harness(
         sync=Sync(config, ledger, client, watch_folder, clock),
+        sync_config=config,
         ledger=ledger,
         watch_dir=config.watch_dir,
+        watch_folder=watch_folder,
         state_dir=config.state_dir,
         client=client,
         clock=clock,
@@ -449,6 +453,34 @@ def test_a_file_that_cannot_be_written_is_worth_another_try(tmp_path: Path, monk
     entry = harness.ledger.entry("111")
     assert entry is not None
     assert entry.status is ActivityStatus.FAILED
+
+
+def test_a_shutdown_lands_between_activities_rather_than_after_the_batch(tmp_path: Path) -> None:
+    client = FakeGarminClient(activities=(RIDE, RUN, SWIM), archives={"111": ARCHIVE, "222": ARCHIVE, "333": ARCHIVE})
+    harness = harness_for(tmp_path, client)
+    stopping: list[str] = []
+
+    sync = Sync(
+        harness.sync_config,
+        harness.ledger,
+        client,
+        harness.watch_folder,
+        harness.clock,
+        should_stop=lambda: bool(stopping),
+    )
+
+    def stop_after_the_first(name: str) -> None:
+        stopping.append(name)
+
+    client.on_download = stop_after_the_first
+    result = sync.run_once()
+
+    # One file finished, the rest still recorded as waiting rather than lost.
+    assert client.downloaded == ["111"]
+    assert result.delivered == 1
+    waiting = [entry.activity_id for entry in harness.ledger.entries() if not entry.status.is_terminal]
+    assert waiting == ["222", "333"]
+    assert Ledger.load(harness.state_dir / LEDGER_FILENAME).entry("111") is not None
 
 
 def test_the_cycle_summary_reads_as_a_sentence(tmp_path: Path) -> None:

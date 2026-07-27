@@ -1,6 +1,6 @@
 """Test doubles for the two things the sync cycle cannot own: Garmin, and the passage of time."""
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -118,6 +118,8 @@ class FakeGarminClient:
         self.listed: list[tuple[Window, tuple[str, ...]]] = []
         self.downloaded: list[str] = []
         self.fallbacks_downloaded: list[tuple[str, FallbackFormat]] = []
+        # Lets a test act the moment a download happens, e.g. ask for a shutdown mid-batch.
+        self.on_download: Callable[[str], None] = lambda _activity_id: None
 
     def fail_listing_with(self, error: Exception, times: int | None = None) -> None:
         self._listing_failures = ScriptedFailures(error, times)
@@ -138,6 +140,7 @@ class FakeGarminClient:
 
     def download_original(self, activity_id: str) -> bytes:
         self.downloaded.append(activity_id)
+        self.on_download(activity_id)
         _raise_if_scripted(self._download_failures.get(activity_id))
 
         if activity_id not in self._archives:
