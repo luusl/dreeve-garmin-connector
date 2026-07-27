@@ -45,6 +45,44 @@ class StubGarminApi:
         return self._archive
 
 
+class StubGarminSession(StubGarminApi):
+    """A `garminconnect.Garmin` instance: the API surface plus the login that produces it."""
+
+    def __init__(
+        self,
+        activities: Sequence[dict[str, Any]] = (),
+        archive: bytes = b"",
+        error: Exception | None = None,
+        login_error: Exception | None = None,
+        **constructed_with: Any,
+    ) -> None:
+        super().__init__(activities=activities, archive=archive, error=error)
+        self.constructed_with = constructed_with
+        self.login_error = login_error
+        self.logins: list[str | None] = []
+
+    def login(self, tokenstore: str | None = None) -> tuple[None, None]:
+        self.logins.append(tokenstore)
+        if self.login_error is not None:
+            raise self.login_error
+
+        return (None, None)
+
+
+class StubSessionFactory:
+    """Stands in for the `Garmin` class itself, so what is handed to the constructor can be inspected."""
+
+    def __init__(self, login_error: Exception | None = None) -> None:
+        self._login_error = login_error
+        self.sessions: list[StubGarminSession] = []
+
+    def __call__(self, **kwargs: Any) -> StubGarminSession:
+        session = StubGarminSession(login_error=self._login_error, **kwargs)
+        self.sessions.append(session)
+
+        return session
+
+
 class ScriptedFailures:
     """A failure that happens a fixed number of times, or forever."""
 

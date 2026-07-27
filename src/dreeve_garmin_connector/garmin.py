@@ -112,7 +112,7 @@ class GarminConnectClient:
         # ACTIVITY_TYPES behaves the same either way.
         requested_type = activity_types[0] if len(activity_types) == 1 else None
 
-        with _translated_errors(f"listing activities for {window}"):
+        with translated_errors(f"listing activities for {window}"):
             payloads = self._api.get_activities_by_date(
                 window.start.strftime(GARMIN_DATE_FORMAT),
                 window.end.strftime(GARMIN_DATE_FORMAT),
@@ -127,7 +127,7 @@ class GarminConnectClient:
         return tuple(activity for activity in activities if activity.activity_type in activity_types)
 
     def download_original(self, activity_id: str) -> bytes:
-        with _translated_errors(f"downloading activity {activity_id}"):
+        with translated_errors(f"downloading activity {activity_id}"):
             return self._api.download_activity(activity_id, dl_fmt=Garmin.ActivityDownloadFormat.ORIGINAL)
 
     def download_fallback(self, activity_id: str, fallback: FallbackFormat) -> bytes:
@@ -139,12 +139,12 @@ class GarminConnectClient:
             FallbackFormat.GPX: Garmin.ActivityDownloadFormat.GPX,
         }[fallback]
 
-        with _translated_errors(f"downloading activity {activity_id} as {fallback.value}"):
+        with translated_errors(f"downloading activity {activity_id} as {fallback.value}"):
             return self._api.download_activity(activity_id, dl_fmt=download_format)
 
 
 @contextmanager
-def _translated_errors(what: str) -> Iterator[None]:
+def translated_errors(what: str) -> Iterator[None]:
     try:
         yield
     except GarminConnectTooManyRequestsError as exception:
