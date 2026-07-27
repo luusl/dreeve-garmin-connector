@@ -55,6 +55,9 @@ select = [
     "ARG",  # flake8-unused-arguments
     "RUF",  # ruff specific rules
 ]
+ignore = [
+    "N818",  # exceptions read as domain concepts here (InvalidConfiguration), mirroring the sibling projects
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["dreeve_garmin_connector"]
