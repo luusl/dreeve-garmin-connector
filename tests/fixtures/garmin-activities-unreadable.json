@@ -1,0 +1,8 @@
+[
+  {
+    "activityId": 12345678901,
+    "activityName": "Morning Ride",
+    "startTimeGMT": "2026-07-25 06:13:42",
+    "activityType": { "typeId": 2 }
+  }
+]

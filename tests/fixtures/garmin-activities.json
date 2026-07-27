@@ -1,0 +1,51 @@
+[
+  {
+    "activityId": 12345678901,
+    "activityName": "Morning Ride",
+    "startTimeLocal": "2026-07-25 08:13:42",
+    "startTimeGMT": "2026-07-25 06:13:42",
+    "activityType": {
+      "typeId": 2,
+      "typeKey": "cycling",
+      "parentTypeId": 17,
+      "isHidden": false
+    },
+    "eventType": { "typeId": 9, "typeKey": "uncategorized" },
+    "distance": 42123.45,
+    "duration": 5400.0,
+    "ownerId": 1234,
+    "hasPolyline": true
+  },
+  {
+    "activityId": 12345678902,
+    "activityName": "Evening Run",
+    "startTimeLocal": "2026-07-25 20:02:00",
+    "startTimeGMT": "2026-07-25 18:02:00",
+    "activityType": {
+      "typeId": 1,
+      "typeKey": "running",
+      "parentTypeId": 17,
+      "isHidden": false
+    },
+    "eventType": { "typeId": 9, "typeKey": "uncategorized" },
+    "distance": 10250.0,
+    "duration": 3120.0,
+    "ownerId": 1234
+  },
+  {
+    "activityId": 12345678903,
+    "activityName": null,
+    "startTimeLocal": "2026-07-26 07:30:00",
+    "startTimeGMT": "2026-07-26 05:30:00",
+    "activityType": {
+      "typeId": 5,
+      "typeKey": "lap_swimming",
+      "parentTypeId": 26,
+      "isHidden": false
+    },
+    "eventType": { "typeId": 9, "typeKey": "uncategorized" },
+    "distance": 1500.0,
+    "duration": 2400.0,
+    "ownerId": 1234
+  }
+]
