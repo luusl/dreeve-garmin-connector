@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from dreeve_garmin_connector.config import FallbackFormat
-from dreeve_garmin_connector.garmin import Activity, GarminError, NoActivityFile
+from dreeve_garmin_connector.garmin import Activity, NoActivityFile
 from dreeve_garmin_connector.window import Window
 
 
@@ -86,11 +86,11 @@ class StubSessionFactory:
 class ScriptedFailures:
     """A failure that happens a fixed number of times, or forever."""
 
-    def __init__(self, error: GarminError, times: int | None) -> None:
+    def __init__(self, error: Exception, times: int | None) -> None:
         self._error = error
         self._remaining = times
 
-    def next(self) -> GarminError | None:
+    def next(self) -> Exception | None:
         if self._remaining is None:
             return self._error
         if self._remaining < 1:
@@ -119,10 +119,10 @@ class FakeGarminClient:
         self.downloaded: list[str] = []
         self.fallbacks_downloaded: list[tuple[str, FallbackFormat]] = []
 
-    def fail_listing_with(self, error: GarminError, times: int | None = None) -> None:
+    def fail_listing_with(self, error: Exception, times: int | None = None) -> None:
         self._listing_failures = ScriptedFailures(error, times)
 
-    def fail_download_with(self, activity_id: str, error: GarminError, times: int | None = None) -> None:
+    def fail_download_with(self, activity_id: str, error: Exception, times: int | None = None) -> None:
         self._download_failures[activity_id] = ScriptedFailures(error, times)
 
     def list_activities(self, window: Window, activity_types: tuple[str, ...] = ()) -> tuple[Activity, ...]:

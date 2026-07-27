@@ -5,11 +5,15 @@ import logging
 import os
 import sys
 from collections.abc import Sequence
+from dataclasses import replace
 
 from dreeve_garmin_connector.auth import Authenticator
 from dreeve_garmin_connector.config import Config, InvalidConfiguration
-from dreeve_garmin_connector.garmin import GarminError
+from dreeve_garmin_connector.delivery import WatchFolder, WatchFolderUnusable
+from dreeve_garmin_connector.garmin import GarminConnectClient, GarminError
+from dreeve_garmin_connector.ledger import LEDGER_FILENAME, CorruptLedger, Ledger
 from dreeve_garmin_connector.logging_ import Secrets, configure_logging
+from dreeve_garmin_connector.sync import Sync, SystemClock
 
 EXIT_OK = 0
 EXIT_FAILED = 1
@@ -28,6 +32,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("login", help="Log in to Garmin once, interactively, and store the session.")
+    sync_command = commands.add_parser("sync-once", help="Run a single sync cycle and exit.")
+    sync_command.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="List what would be downloaded, download nothing and leave the ledger untouched.",
+    )
 
     arguments = parser.parse_args(argv)
 
@@ -38,11 +48,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(exception, file=sys.stderr)
         return EXIT_FAILED
 
+    if getattr(arguments, "dry_run", False):
+        config = replace(config, dry_run=True)
+
     secrets = Secrets([config.garmin_email, config.garmin_password])
     configure_logging(config.log_level, config.log_format, secrets)
 
     # argparse has already rejected anything that is not a registered command.
-    commands_by_name = {"login": login}
+    commands_by_name = {"login": login, "sync-once": sync_once}
 
     return commands_by_name[arguments.command](config, secrets)
 
@@ -61,6 +74,33 @@ def login(config: Config, secrets: Secrets) -> int:
     )
 
     return EXIT_OK
+
+
+def sync_once(config: Config, secrets: Secrets) -> int:
+    try:
+        result = build_sync(config, secrets).run_once()
+    except (InvalidConfiguration, GarminError, CorruptLedger, WatchFolderUnusable) as exception:
+        logger.error("Sync failed. %s", exception)
+        return EXIT_FAILED
+
+    logger.info("Cycle finished: %s", result)
+
+    return EXIT_OK
+
+
+def build_sync(config: Config, secrets: Secrets) -> Sync:
+    watch_folder = WatchFolder(config.watch_dir, config.on_conflict)
+    watch_folder.prepare()
+
+    session = Authenticator(config, secrets).resume()
+
+    return Sync(
+        config=config,
+        ledger=Ledger.load(config.state_dir / LEDGER_FILENAME),
+        client=GarminConnectClient(session),
+        watch_folder=watch_folder,
+        clock=SystemClock(),
+    )
 
 
 def ask_for_mfa_code() -> str:

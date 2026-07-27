@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 LEDGER_VERSION = 1
+LEDGER_FILENAME = "ledger.json"
 TEMP_SUFFIX = ".tmp"
 
 logger = logging.getLogger(__name__)
@@ -188,6 +189,9 @@ class Ledger:
 
     def entry(self, activity_id: str) -> LedgerEntry | None:
         return self._entries.get(activity_id)
+
+    def entries(self) -> tuple[LedgerEntry, ...]:
+        return tuple(self._entries.values())
 
     def counts_by_status(self) -> dict[ActivityStatus, int]:
         counted = Counter(entry.status for entry in self._entries.values())
