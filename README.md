@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.svg" width="250" alt="Logo" >
+  <img src="https://raw.githubusercontent.com/dreeveapp/dreeve-garmin-connector/refs/heads/master/assets/logo.svg" width="250" alt="Logo" >
 </p>
 
 <h1 align="center">Dreeve Garmin Connector</h1>
