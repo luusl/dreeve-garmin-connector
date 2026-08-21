@@ -9,8 +9,13 @@ ARG PYTHON_IMAGE=python:3.13-slim
 # python, pytest, ruff and mypy never have to exist on the host.
 FROM ${PYTHON_IMAGE} AS dev
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install uv from PyPI
-RUN pip install --no-cache-dir uv==0.11.32
+RUN pip install --no-cache-dir --root-user-action=ignore uv==0.11.32
 
 # The venv deliberately lives outside /app: the source is bind mounted over /app and
 # would otherwise hide it.
