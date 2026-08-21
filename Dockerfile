@@ -4,15 +4,13 @@
 # guaranteed where musllinux ones are not. On Alpine this risks building a TLS-impersonation
 # library from source on every architecture.
 ARG PYTHON_IMAGE=python:3.13-slim
-# Covers linux/amd64 and linux/arm64, which is what is released. It publishes no linux/arm/v7;
-# if that is ever wanted, install uv from PyPI instead — its wheels do cover armv7l.
-ARG UV_IMAGE=ghcr.io/astral-sh/uv:0.11.32
 
 # The dev stage is the toolchain container: every make target runs inside it, so uv,
 # python, pytest, ruff and mypy never have to exist on the host.
 FROM ${PYTHON_IMAGE} AS dev
 
-COPY --from=ghcr.io/astral-sh/uv:0.11.32 /uv /uvx /usr/local/bin/
+# Install uv from PyPI
+RUN pip install --no-cache-dir uv==0.11.32
 
 # The venv deliberately lives outside /app: the source is bind mounted over /app and
 # would otherwise hide it.
@@ -34,7 +32,7 @@ CMD ["bash"]
 
 FROM ${PYTHON_IMAGE} AS builder
 
-COPY --from=ghcr.io/astral-sh/uv:0.11.32 /uv /usr/local/bin/
+RUN pip install --no-cache-dir uv==0.11.32
 
 ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
     UV_COMPILE_BYTECODE=1 \
