@@ -37,7 +37,12 @@ CMD ["bash"]
 
 FROM ${PYTHON_IMAGE} AS builder
 
-RUN pip install --no-cache-dir uv==0.11.32
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir --root-user-action=ignore uv==0.11.32
 
 ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
     UV_COMPILE_BYTECODE=1 \
